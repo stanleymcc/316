@@ -1,0 +1,694 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=utf-8">
+	<TITLE>Blackjack by Lula Hogg, Stanley McClister and Paul Piwowarski/Linton</TITLE>
+
+	<SCRIPT LANGUAGE="JavaScript">
+/* 
+CS316 program 1
+Initial Author: Paul Piwowarski 2014/09
+Authors of Complete Program: Lula Hogg, Stanley McClister 
+Modifications: Lula Hogg, Stanley McClister  2016/10
+This program is a group project based off unfinished code provided by the teacher.
+
+Example code to start Program 1
+*/
+//****************************** GLOBAL VARIABLES ***********************************************
+// SHOESIZE is size of deck: 52 for normal deck
+// Note: do not hardcode deck size. Use this variable
+// to simplify my (and your) testing
+var numOfDecks = 1; 
+var SHOESIZE = 52 * numOfDecks; // size of deck
+var card = new Array(SHOESIZE); // shuffled deck
+var cardstart = new Array(SHOESIZE); // starting deck in order
+var cc; // index into card array during play
+var dealpressed = 0;    // deal button has been pressed
+// Put other global variables here ***********************************************************************
+
+var deck_shuffle = Math.round(SHOESIZE - (SHOESIZE * 0.20)); 
+var player_total = 0;  // A global variable to keep track of the player total till they hit reset.  
+var dealer_total = 0;  // A global variable to keep track of the dealer total till they hit reset.  
+
+var players_hand;  // An array of image tags for the players hand
+var dealer_hand;   // An array of image tags for the dealers hand
+
+var dealers_second_card = 0 ; // A placeholder for the dealers second card. 
+
+var dealer_total_sum = 0;  // The dealer's total points along with the face down card. 
+
+var player_win = 0;  // Increments everytime the player wins
+
+var total_plays = 0;  //Increments at the beginning of each game
+
+var dealer_win_count = 0; //run1000 dealer win count
+var player_win_count = 0; //run1000 player win count
+
+var tie = 0; //run1000 tie count
+
+var dealer_card_numbers = []; //holds card numbers for dealer
+var player_card_numbers = []; //holds card numbers for player
+
+shuffle();   // start with new deal
+
+// shuffle
+// This is one way to create a shuffled deck
+// reshuffle the cards, put in card array
+// Preconditions:
+//	New Deal button pressed
+// Postconditions:
+//	Card array filled and shuffled
+
+function shuffle() {  
+	// cardstart is unshuffled 1,2,3....
+	// card 1 is ace of clubs (1.png)
+	// card 2 is ace of spades (2.png)
+	// card 52 is 2 of diamonds (52.png)
+	for (var i = 0; i < SHOESIZE;i++) {
+		if((i+1) % 52 == 0)
+		{
+			cardstart[i] = 52; 
+		}
+		else{
+		cardstart[i] = (i+1) % 52;
+	}
+	
+	}
+	// select card randomly from cardstart and put in card
+	var randcard; // randomly selected card 
+	for (var j = 0; j < SHOESIZE; j++) {
+		randcard = Math.round(Math.random() * (SHOESIZE - j - 1)); // choose card
+		card[j] = cardstart[randcard]; // store random card
+		cardstart.splice(randcard, 1); // pack array
+	}  
+	cc = 0;              // index into card array
+}
+
+// resetdata
+// reset all variables, screen fields to start fresh
+
+function resetdata(choice) {
+	//alert("Reset pressed");  // replace with actual code for reset
+
+	// Resets the dealer score, player score, the Win/Loss, and the precentage 
+	var opscore = document.getElementById('opscore').value=0; 
+	var myscore = document.getElementById('myscore').value=0;
+	var myresult = document.getElementById('myresult').value=0;
+	if (choice == 0){
+	var winning = document.getElementById('winning').value=100;
+}
+
+	document.getElementById("dlcards").innerHTML = ""; 
+	document.getElementById("mycards").innerHTML = "";
+}
+
+// calculate
+// calculate value of card
+// Preconditions:
+//	Card passed
+//	1 <= card <= 52
+// Postconditions:
+//	Card value returned
+function calculate(card) {
+
+	var value; // numerical value of card
+	if (card <= 4) {    // ace
+		value = ace(card);
+		return value; 
+	}
+	if (card <= 20) {   // face card or 10
+		value = 10;
+		return value;
+	}
+	if (card <= 24) {  // 9, and so forth
+		value = 9;
+		return value;
+	}    
+	if (card <= 28) {
+		value = 8;
+		return value;
+	}      
+	if (card <= 32) {
+		value = 7;
+		return value;
+	}    
+	if (card <= 36) {
+		value = 6;
+		return value;
+	}    
+	if (card <= 40) {
+		value = 5;
+		return value;
+	}    
+	if (card <= 44) {
+		value = 4;
+		return value;
+	}    
+	if (card <= 48) {
+		value = 3;
+		return value;
+	}   
+	value = 2;          // only 2 left
+	return value; 
+}
+
+  // getcard
+  // get card from cardstart, then remove from deck
+  function getcard() {
+      
+   
+    var cards = card[cc++]; // Pulls from the top of the deck. 
+   
+   	console.log("Position: ", cc);
+   	console.log(deck_shuffle); 
+    if( cc >= deck_shuffle)
+    {
+    	shuffle(); 
+    	alert("Deck was shuffled");
+    }
+    
+    return cards;
+  }
+
+  // run 1000 times
+  function run1000() {
+    var i;
+    //alert("Run 1000 pressed");  // Delete when run1000 coded.
+    for (i=0;i<1000;i++) { //1000 changed for testing.
+ 
+      shuffle();   // start with shuffled deck
+      
+      deal();           // then deal 
+   
+      run();              // then run
+    } 
+    var per = Math.round((( player_win_count + tie ) / 1000) * 100); 
+    var percent = document.getElementById('winning').value=per;  // calculate the percent of wins 
+    
+    //used for debugging
+    //console.log("dealer hand", dealer_total_sum);
+    //console.log("player hand", player_total); 
+    var temptest = ("You won: "+ player_win_count+ "\nDealer won: "+ dealer_win_count+ "\nTie: "+ tie)
+    document.getElementById("scores").innerHTML= temptest;
+    console.log("run1000 finished");
+    //document.getElementById('myresult').value=("W: ", player_win_count);
+    player_win_count = 0; 
+    tie = 0; 
+    // when done, update the screen
+    document.getElementById("dlcards").innerHTML = ""; 
+    document.getElementById("mycards").innerHTML = "";
+ 
+  }
+ 
+  // hit
+  // Determine whether to take one more card
+  // Preconditions:
+  //    playerhand - array of card values
+  //	dealerhand - array of card values
+  // Postconditions:
+  //    returns true: take another card
+  //            false: do not take card
+  //    For the input cards (playerhand[], dealerhand[])
+  //    ace  11
+  //    face card 10
+  //    all others their value 
+  function hit(temp) {
+	// if temp is 0 dealer has hit
+	if (temp == 0){
+		console.log("dealer");
+		dlcardnumber = getcard()
+		dealer_card_numbers.splice(dealer_card_numbers.length,0,dlcardnumber);
+		dealer_total += calculate(dlcardnumber);
+		dealer_total_sum += calculate(dlcardnumber);
+	}
+	// if temp is 1 player has hit
+	else if (temp == 1){
+		console.log("player");
+		mycardnumber = getcard();
+		player_card_numbers.splice(player_card_numbers.length,0,mycardnumber);
+		player_total += calculate(mycardnumber);
+	}
+	// error catch 
+	else{
+		alert("Incorrect temp data passed");
+	}
+	
+	//console.log("hit"); // debug
+ 
+    
+  }
+// run
+// after deal, determine whether to take card or not
+// Preconditions:
+//	Deal button pressed
+// Postconditions:
+//	Game completed
+//	Results displayed 
+function run() {
+
+	var dealer_bustCheck = false; //checks for dealer bust
+	var player_bustCheck = false; //checks for player bust
+	var dealer_win = false; //checks for dealer win
+	var player_win = false; //checks for player win
+	var player_stay = false; //checks to see if player wants to stay
+	var stay = false; // if both dealer and player conditions are met
+	var runCheck = 0; //debug run check
+		
+	//alert("Run pressed");  // replace with actual code for run
+	while(dealer_bustCheck != true && player_bustCheck != true && stay != true){
+		console.log("dealer start hand", dealer_total_sum);
+		var hit_already_implemented = false;
+				
+		// if dealer's points are less than 17
+		if (dealer_total_sum < 17) {
+			hit(0);
+			aceCheck();
+			dealer_bustCheck = bust();
+			dealer_win = win();
+			console.log("dealer bust", dealer_bustCheck);
+		}
+		// if dealer sum showing is 10 and player sum is 16 player (stays)
+		if (dealer_total == 10 && player_total == 16) {
+			player_stay == true;
+		}
+		
+		// if dealer sum is 7 or higher and player sum is 16 player (hits) (exception is dealer sum 10)
+		if (dealer_total == 7 || dealer_total == 8 || dealer_total == 9 || dealer_total >= 11 && player_total == 16) {
+			hit(1);
+			aceCheck();
+			player_bustCheck = bust();
+			console.log("player bust", player_bustCheck);
+			player_win = win();
+			hit_already_implemented = true;
+		}
+		
+		// if dealer sum 12 or less and player sum 12 player (hits)
+		if (dealer_total <= 12 && player_total == 12) {
+			hit(1);
+			aceCheck();
+			player_bustCheck = bust();
+			console.log("player bust", player_bustCheck);
+			player_win = win();
+			hit_already_implemented = true;
+		}
+
+		// if dealer sum 9, 10 , Ace and player sum 18 player (hits)
+		if (dealer_total == 9 || dealer_total == 10 && player_total == 18) {
+			hit(1);
+			aceCheck();
+			player_bustCheck = bust();
+			console.log("player bust", player_bustCheck);
+			player_win = win();
+			hit_already_implemented = true;
+		}
+		
+		// if dealer sum 8 or less and player sum 18 player (stay)
+		if (dealer_total <= 8 && player_total == 18) {
+			player_stay == true;
+		}
+		
+		// if dealer sum 11 or greater and player sum 18 player (stay) 
+		if (dealer_total >= 11 && player_total == 18) {
+			player_stay == true;
+		}
+		
+		// if player's points are less than 18
+		if (player_total < 18 && player_stay == false && hit_already_implemented == false) {
+			hit(1);
+			aceCheck();
+			player_bustCheck = bust();
+			console.log("player bust", player_bustCheck);
+			player_win = win();
+		}
+		// if dealer and player both have 21 (tie)
+		if (dealer_win == true && player_win == true){
+			tie += 1; 
+		}
+		// if dealer and player (both bust)
+		else if (dealer_bustCheck == true && player_bustCheck == true){
+			tie += 1;
+		}
+		// if dealer has 21 (dealer win)
+		else if (dealer_win_count == true || player_bustCheck == true){
+			dealer_win_count += 1;
+		}
+		// if player has 21 (player win)
+		else if (player_win == true || dealer_bustCheck == true){
+			player_win_count += 1;
+		}
+		// if both dealer and player conditions are met
+		else{
+			stay = true;
+		}
+		// if both dealer and player 'stay' check who wins or tie
+		if(stay == true) {
+			console.log("both stay");
+			if (dealer_total_sum > player_total){
+				dealer_win_count += 1;
+			}			
+			else if (dealer_total_sum < player_total){
+				player_win_count += 1;
+			}
+			else {
+				tie += 1;
+			}
+		}
+		
+		//runCheck += 1; //checks the number of runs until a winner is found (debug)
+		//console.log("check"); // checks to make sure program is reaching this point (debug)
+	}
+	
+	// add ace calculate
+	aceCheck();
+	// checks for calculations (debug)
+	//console.log("run", runCheck);
+	console.log("player win", player_win_count);
+	console.log("dealer win", dealer_win_count);
+	console.log("tie", tie);
+}
+
+// checks to see if dealer or player hits 21
+function win(totalNumber) {
+	if(totalNumber == 21){
+		return true;
+	}
+}
+
+// deal
+// start by dealing 2 cards to opponent and you
+function deal() {
+	document.getElementById("scores").innerHTML= ""; //removes scores listed from run1000
+	// deal cards and display data
+	dealpressed = 1; // deal button has been pressed
+	// draw two cards for each player
+	total_plays += 1;  // Increments at the beginning of the deal. 
+
+	var myresult = document.getElementById('myresult').value="";
+	dlcard1number = getcard();
+	dlcard2number = getcard();
+	mycard1number = getcard();
+	mycard2number = getcard();
+
+	 
+
+	var dlcard1 = "<img src = '"+dlcard1number+".png' />";
+	dealers_second_card = "<img src = '"+dlcard2number+".png' />";
+	dealers_hand = [dlcard1]; 
+
+	// Team Project: Don't display the second dealers cards. 
+	//var dlcard2 = "<img src = '"+dlcard2number+".png' />";
+
+	dlcards = dlcard1;
+
+	var mycard1 = "<img src = '"+mycard1number+".png' />";
+	var mycard2 = "<img src = '"+mycard2number+".png' />";
+	
+	dealer_card_numbers = [dlcard1number, dlcard2number]; 
+	player_card_numbers = [mycard1number, mycard2number];
+	
+	players_hand = [mycard1,mycard2]; 
+
+	mycards = mycard1 + mycard2;
+
+	player_total = calculate(mycard1number) + calculate(mycard2number);  //Calculates the players score. 
+	dealer_total = calculate(dlcard1number); 
+
+	dealer_total_sum = dealer_total + calculate(dlcard2number); 
+    	// Example how to display on screen in textboxes
+    
+    	document.JForm.opscore.value = calculate(dlcard1number); // Only shows the dealers first card 
+    	document.JForm.myscore.value = player_total; 
+    	
+    	// Display cards on screen
+    	document.getElementById("dlcards").innerHTML = dlcards; 
+	   	document.getElementById("mycards").innerHTML = mycards;
+	if (player_total == 21)
+	{
+		player_win += 1; 
+		var myresult = document.getElementById('myresult').value="Win";
+		show_all()
+	}
+	else if (dealer_total_sum == 21)
+	{
+		
+		var myresult = document.getElementById('myresult').value="Loss";
+		show_all();
+	}
+
+	
+}
+
+function playerHit()
+{	
+	if(dealpressed == 1){
+		win_hit(); 
+		aceCheck();
+
+		if(bust() == false)
+		{
+			mycardnumber = getcard();
+
+			var mycard = "<img src = '"+mycardnumber+".png' />";
+			players_hand.splice(players_hand.length,0,mycard); // Adds the random card img tag to the end of an array. 
+			player_card_numbers.splice(player_card_numbers.length,0,mycardnumber); // Adds the random card number to the end of an array. 
+			player_total += calculate(mycardnumber); 
+			document.getElementById("mycards").innerHTML = players_hand; // This displays the users hand
+			var myscore = document.getElementById('myscore').value=player_total;
+		}
+
+
+		if( dealer_total_sum < 17)
+		{
+			dlcardnumber = getcard();
+			var dlcard = "<img src = '"+dlcardnumber+".png' />";
+			dealers_hand.splice(dealers_hand.length,0,dlcard); 
+			dealer_card_numbers.splice(dealer_card_numbers.length,0,mycardnumber);
+			document.getElementById("dlcards").innerHTML = dealers_hand; 
+			dealer_total += calculate(dlcardnumber); 
+			dealer_total_sum += calculate(dlcardnumber); 
+			document.JForm.opscore.value = dealer_total;
+			console.log(dealer_total_sum); 
+			console.log(dealer_total); 
+
+		}
+		aceCheck();
+
+		win_hit(); 
+	}
+	else{
+		alert("You must press deal first."); 
+	}
+}
+function show_all()
+{
+	dealers_hand.splice(2,0,dealers_second_card); 
+	document.getElementById("dlcards").innerHTML = dealers_hand; 
+	document.JForm.opscore.value = dealer_total_sum;
+	var percent = Math.round((player_win/total_plays) * 100)
+	var winning = document.getElementById('winning').value=percent;
+	dealpressed = 0; //changes dealpressed so that user may not use the hit button. 
+}
+
+function win_hit()
+{
+	if (player_total == 21 || dealer_total_sum > 21)
+	{
+		player_win += 1; 
+		var myresult = document.getElementById('myresult').value="Win";
+		show_all()
+	}
+	else if (dealer_total_sum == 21 || player_total > 21)
+	{
+		var myresult = document.getElementById('myresult').value="Loss";
+		show_all();
+	}
+}
+function bust()
+{
+	document.JForm.myscore.value = player_total;
+	if(player_total > 21)
+	{
+		player_total = "BUST"; 	
+		var myresult = document.getElementById('myresult').value="Loss";
+		show_all(); 
+		return true; 
+		 
+	}
+
+	if(dealer_total_sum > 21)
+	{
+		 
+		dealer_total_sum = "BUST"; 	
+		player_win += 1; 
+		show_all(); 
+		return true; 
+	}
+	//percentage(); 
+
+	return false; 
+}
+
+function stay()
+{
+	if (player_total == 21 || dealer_total_sum >= 21 || player_total >= dealer_total_sum)
+	{
+		var myresult = document.getElementById('myresult').value="Win";
+		player_win += 1;
+		//total_plays += 1; 
+		show_all();
+
+		
+
+	}
+	else if (dealer_total_sum == 21 || dealer_total_sum > player_total)
+	{
+		var myresult = document.getElementById('myresult').value="Loss";
+		//total_plays += 1;
+		show_all();
+		
+	}
+	
+	var percent = Math.round((player_win/total_plays) * 100);
+	var winning = document.getElementById('winning').value=percent;
+
+}
+
+//if value inside index is < 4 it is ace
+function aceCheck(){
+	//loop through dealer hand. Set ace value.
+	console.log("dealer hand", dealer_card_numbers);
+	console.log("player hand", player_card_numbers);
+	for (i = 0; i < dealer_card_numbers.length; i++) {
+		if (dealer_card_numbers[i] <= 4 && dealer_total_sum > 21){
+			if (dealer_card_numbers[1] <=4) {
+				dealer_total_sum -= 10;
+			}
+			else if(dealer_card_numbers[i] <=4 && i != 1) {
+				dealer_total_sum -= 10;
+				dealer_total -= 10;
+				var opscore = document.getElementById('opscore').value=dealer_total;
+			}
+		}
+	}
+
+	//loop through player hand. Set ace value.
+	for (i = 0; i < player_card_numbers.length; i++) {
+		if (player_card_numbers[i] <= 4 && player_total > 21){
+			player_total -= 10;
+			var myscore = document.getElementById('myscore').value=player_total;
+		}
+	}	
+}
+
+function ace(card)
+{
+	var ace_value = 11; 
+	 
+		if((player_total + 11) <= 21 || (dealer_total_sum + 11) <= 21) //Checks a predictive score to see if its 11 or 1 for either player.
+			ace_value = 11; 
+		else
+			ace_value == 1; 
+	
+	
+	return ace_value; 
+}
+
+</SCRIPT>
+
+</HEAD>
+<BODY >
+<FORM NAME="JForm">
+<CENTER>
+	<TABLE CELLPADDING=2 CELLSPACING=2 STYLE="page-break-before: always">
+		<TR>
+			<TH STYLE="border: none; padding: 0in">
+				<P>New deal</P>
+			</TH>
+			<TH STYLE="border: none; padding: 0in">
+				<P><INPUT TYPE=BUTTON VALUE="Shuffle" STYLE="width: 1.08in; height: 0.4in" ONCLICK="shuffle();"> </P>
+			</TH>
+			<TH STYLE="border: none; padding: 0in">
+				<P>Reset</P>
+			</TH>
+			<TH STYLE="border: none; padding: 0in">
+				<P><INPUT TYPE=BUTTON VALUE="Reset" STYLE="width: 0.75in; height: 0.4in" ONCLICK="resetdata(0);"> </P>
+			</TH>
+		</TR>		<!-- row 1 -->
+		<TR>
+			<TH STYLE="border: none; padding: 0in">
+				<P>Dealer score: </P>
+			</TH>
+			<TH STYLE="border: none; padding: 0in">
+				<P><INPUT id="opscore" TYPE=TEXT NAME="opscore" VALUE="0" SIZE=5 STYLE="width: 0.51in; height: 0.31in"> </P>
+			</TH>
+			<TH STYLE="border: none; padding: 0in">
+				<P>My score: </P>
+			</TH>
+			<TH STYLE="border: none; padding: 0in">
+				<P><INPUT id="myscore" TYPE=TEXT NAME="myscore" VALUE="0" SIZE=5 STYLE="width: 0.51in; height: 0.31in"> </P>
+			</TH>
+			<TD COLSPAN=2 VALIGN=TOP STYLE="border: none; padding: 0in"></TD>
+		</TR>		<!-- row 2 -->
+		<TR>
+			<TH STYLE="border: none; padding: 0in">
+				<P>Win/Loss?: </P>
+			</TH>
+			<TH STYLE="border: none; padding: 0in">
+				<P><INPUT id="myresult" TYPE=TEXT NAME="myresult" VALUE="0" SIZE=5 STYLE="width: 0.51in; height: 0.31in"> </P>
+			</TH>
+<!--			<TD COLSPAN=2 VALIGN=TOP STYLE="border: none; padding: 0in"></TD>  -->
+			<TH STYLE="border: none; padding: 0in">
+				<P>My win %: </P>
+			</TH>
+			<TH STYLE="border: none; padding: 0in"> 
+				<P><INPUT id="winning" TYPE=TEXT NAME="winning" VALUE="100" SIZE=5 STYLE="width: 0.51in; height: 0.31in"> </P>
+			</TH>
+		
+			<TH STYLE="border: none; padding: 0in"></TH>
+			<TD VALIGN=TOP STYLE="border: none; padding: 0in"></TD>
+		</TR>		<!-- row 3 -->
+		<TR>
+			<TH STYLE="border: none; padding: 0in">
+				<P>Deal</P> 
+			</TH>
+			<TH STYLE="border: none; padding: 0in">
+				<P><INPUT id="Deal" TYPE=BUTTON VALUE="Deal" STYLE="width: 0.64in; height: 0.4in" ONCLICK="deal();"> </P>
+			</TH>
+			<TH STYLE="border: none; padding: 0in">
+				<P>Stay</P> 
+			</TH>
+			<TH STYLE="border: none; padding: 0in">
+				<P><INPUT TYPE=BUTTON VALUE="Stay" STYLE="width: 0.59in; height: 0.4in" ONCLICK="stay();"> </P>
+			</TH>
+			<TH STYLE="border: none; padding: 0in"> 
+				<P>Run 1000 times</P>
+			</TH>
+			<TH STYLE="border: none; padding: 0in">
+				<P><INPUT TYPE=BUTTON VALUE="Run" STYLE="width: 0.59in; height: 0.4in" ONCLICK="run1000();"> </P>
+			</TH>
+		</TR>	
+
+		<TR>
+			<TH STYLE="border: none; padding: 0in"> 
+				<P>Hit</P>
+			</TH>
+			<TH STYLE="border: none; padding: 0in">
+				<P><INPUT TYPE=BUTTON VALUE="Hit" STYLE="width: 0.59in; height: 0.4in" ONCLICK="playerHit();"> </P>
+			</TH>
+		<TR> 
+
+	</TABLE>
+</CENTER>
+</FORM>
+<div id="scores" align=center></div>
+<h2 align=center>Dealer's Cards</h2>
+<div id="dlcards" align=center> 
+	<h2  align=center></h2>
+</div>
+<h2  align=center> My Cards</h2>
+<div id="mycards" align=center >
+	<h2 class="WESTERN" align=center></h2>
+</div>
+
+</BODY>
+</HTML>
